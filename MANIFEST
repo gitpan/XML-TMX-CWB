@@ -1,0 +1,12 @@
+Build.PL
+Changes
+MANIFEST
+README
+lib/XML/TMX/CWB.pm
+t/00-load.t
+t/manifest.t
+t/pod-coverage.t
+t/pod.t
+bin/cwb2tmx
+bin/tmx2cwb
+META.yml

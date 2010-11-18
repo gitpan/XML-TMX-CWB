@@ -1,0 +1,5 @@
+Revision history for XML-TMX-CWB
+
+0.01    Thu Nov 18 22:03:56 WET 2010
+        First version, includes cwb2tmx and tmx2cwb working on simple cases.
+

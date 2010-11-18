@@ -1,0 +1,28 @@
+#!/usr/bin/perl -s
+
+use strict;
+use warnings;
+
+use XML::TMX::CWB;
+
+our (
+     $from,            # source language
+     $to,              # target language
+     $registry,        # CWB registry folder
+     $corpora,         # corpora folder
+     $toksource,       # tokenize source language?
+     $toktarget,       # tokenize target language?
+    );
+
+my $file = shift;
+
+my %args;
+$args{to}              = $to        if $to;
+$args{from}            = $from      if $from;
+$args{corpora}         = $corpora   if $corpora;
+$args{registry}        = $registry  if $registry;
+$args{tokenize_source} = $toksource if $toksource;
+$args{tokenize_target} = $toktarget if $toktarget;
+
+XML::TMX::CWB->toCWB(tmx => $file, %args);
+
