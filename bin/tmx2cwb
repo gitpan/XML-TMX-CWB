@@ -6,6 +6,7 @@ use warnings;
 use XML::TMX::CWB;
 
 our (
+     $h,               # help
      $from,            # source language
      $to,              # target language
      $registry,        # CWB registry folder
@@ -13,6 +14,14 @@ our (
      $toksource,       # tokenize source language?
      $toktarget,       # tokenize target language?
     );
+
+if ($h) {
+    print "   tmx2cwb <-from=PT> <-to=EN> <-corpora=/corpora>\n";
+    print "           <-registry=/usr/share/cwb/registry>\n";
+    print "           <-tokenize_source> <-tokenize_target>\n";
+    print "           [file.tmx]\n";
+    exit 1;
+}
 
 my $file = shift;
 
@@ -25,4 +34,71 @@ $args{tokenize_source} = $toksource if $toksource;
 $args{tokenize_target} = $toktarget if $toktarget;
 
 XML::TMX::CWB->toCWB(tmx => $file, %args);
+
+=encoding UTF-8
+
+=head1 NAME
+
+tmx2cwb - encodes a pair of languages from a TMX file as a CWB corpus
+
+=head1 SYNOPSIS
+
+   tmx2cwb <-from=PT> <-to=EN> <-corpora=/corpora>
+           <-registry=/usr/share/cwb/registry>
+           <-tokenize_source> <-tokenize_target>
+           [file.tmx]
+
+=head1 DESCRIPTION
+
+This program encodes a pair of languages extracted from a TMX file as
+a CWB corpus. Optionally it can tokenize the text (using basic
+tokenizing rules).
+
+Accepted options are:
+
+=over 4
+
+=item C<-from>
+=item C<-to>
+
+These two parameters are useful when more than two languages are
+available. They let the user to choose what languages to be
+encoded. When only two languages are present, they are used by
+default. If you want to force an order on those two languages, it is
+enough to specify one of the two options.
+
+=item C<-corpora>
+
+Path to the directory where the corpus should be encoded. Defaults to
+the C</corpora> folder.
+
+=item C<-registry>
+
+Path to the CWB registry folder. The tool tries to guess it using the
+C<cwb-config> command or the environment variable
+C<CORPUS_REGISTRY>. If not, you will need to specify it.
+
+=item C<-tokenize_source>
+=item C<-tokenize_target>
+
+These two options can be used to make the tool to tokenize the source
+and/or the target language. Note that the used rules are good for
+Portuguese, acceptable for Spanish, English, French and Italian, and
+should be quite bad for other languages.
+
+=back
+
+=head1 SEE ALSO
+
+XML::TMX::CWB(3)
+
+=head1 AUTHOR
+
+Alberto Manuel Brandão Simões, E<lt>ambs@cpan.orgE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2010 by Alberto Manuel Brandão Simões
+
+=cut
 

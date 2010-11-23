@@ -1,5 +1,8 @@
 Revision history for XML-TMX-CWB
 
+0.02    Tue Nov 23 16:29:41 WET 2010
+        Added basic documentation to the two scripts.
+
 0.01    Thu Nov 18 22:03:56 WET 2010
         First version, includes cwb2tmx and tmx2cwb working on simple cases.
 
