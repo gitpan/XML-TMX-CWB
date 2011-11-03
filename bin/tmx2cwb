@@ -6,6 +6,7 @@ use warnings;
 use XML::TMX::CWB;
 
 our (
+     $v,               # verbose
      $h,               # help
      $from,            # source language
      $to,              # target language
@@ -18,7 +19,7 @@ our (
 if ($h) {
     print "   tmx2cwb <-from=PT> <-to=EN> <-corpora=/corpora>\n";
     print "           <-registry=/usr/share/cwb/registry>\n";
-    print "           <-tokenize_source> <-tokenize_target>\n";
+    print "           <-toksource> <-toktarget>\n";
     print "           [file.tmx]\n";
     exit 1;
 }
@@ -32,6 +33,7 @@ $args{corpora}         = $corpora   if $corpora;
 $args{registry}        = $registry  if $registry;
 $args{tokenize_source} = $toksource if $toksource;
 $args{tokenize_target} = $toktarget if $toktarget;
+$args{verbose}         = $v || 0;
 
 XML::TMX::CWB->toCWB(tmx => $file, %args);
 
@@ -45,7 +47,7 @@ tmx2cwb - encodes a pair of languages from a TMX file as a CWB corpus
 
    tmx2cwb <-from=PT> <-to=EN> <-corpora=/corpora>
            <-registry=/usr/share/cwb/registry>
-           <-tokenize_source> <-tokenize_target>
+           <-toksource> <-toktarget>
            [file.tmx]
 
 =head1 DESCRIPTION
@@ -78,13 +80,21 @@ Path to the CWB registry folder. The tool tries to guess it using the
 C<cwb-config> command or the environment variable
 C<CORPUS_REGISTRY>. If not, you will need to specify it.
 
-=item C<-tokenize_source>
-=item C<-tokenize_target>
+=item C<-toksource>
+=item C<-toktarget>
 
 These two options can be used to make the tool to tokenize the source
 and/or the target language. Note that the used rules are good for
 Portuguese, acceptable for Spanish, English, French and Italian, and
 should be quite bad for other languages.
+
+=item C<-v>
+
+Verbose mode
+
+=item C<-h>
+
+Prints basic help information.
 
 =back
 

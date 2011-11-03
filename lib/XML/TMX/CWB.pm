@@ -9,17 +9,21 @@ use CWB::CL::Strict;
 use File::Spec::Functions;
 use Encode;
 
+use POSIX qw(locale_h);
+setlocale(&POSIX::LC_ALL, "pt_PT");
+use locale;
+
 =head1 NAME
 
 XML::TMX::CWB - TMX interface with Open Corpus Workbench
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 =head1 SYNOPSIS
@@ -30,12 +34,14 @@ our $VERSION = '0.02';
                           corpus_name => "foo",
                           tokenize_source => 1,
                           tokenize_target => 1,
+                          verbose => 1,
                           registry => '/path/to/cwb/registry' );
 
     XML::TMX::CWB->toTMX( source => 'sourcecorpus',
                           target => 'targetcorpus',
                           source_lang => 'PT',
                           target_lang => 'ES',
+                          verbose => 1,
                           output => "foobar.tmx");
 
 
@@ -118,7 +124,6 @@ sub toCWB {
     chomp( $registry = `cwb-config -r` ) unless $registry;
     die "Could not detect a suitable CWB registry folder.\n" unless $registry && -d $registry;
 
-
     my $cname = $ops{corpus_name} || $tmx;
 
     $cname =~ s/[.-]/_/g;
@@ -126,6 +131,7 @@ sub toCWB {
     _tmx2cqpfiles($reader, $cname, $source, $target,
                   $ops{tokenize_source} || 0,
                   $ops{tokenize_target} || 0,
+                  $ops{verbose}
                  );
 
     _encode($cname, $corpora, $registry, $source, $target);
@@ -144,27 +150,29 @@ sub _encode {
     $reg    = catfile($registry, $name);
     mkdir $folder;
     _RUN("cwb-encode -c utf8 -d $folder -f source.cqp -R $reg -S tu+id");
-    _RUN("cwb-make -v " . uc($name));
+    _RUN("cwb-make -r $reg -v " . uc($name));
 
     $name = lc("${cname}_$l2");
     $folder = catfile($corpora,  $name);
     $reg    = catfile($registry, $name);
     mkdir $folder;
     _RUN("cwb-encode -c utf8 -d $folder -f target.cqp -R $reg -S tu+id");
-    _RUN("cwb-make -v " . uc($name));
+    _RUN("cwb-make -r $reg -v " . uc($name));
 
-    _RUN("cwb-align-import -v align.txt");
-    _RUN("cwb-align-import -v -inverse align.txt");
+    _RUN("cwb-align-import -r $reg -v align.txt");
+    _RUN("cwb-align-import -r $reg -v -inverse align.txt");
 }
 
 sub _tmx2cqpfiles {
-    my ($reader, $cname, $l1, $l2, $t1, $t2) = @_;
+    my ($reader, $cname, $l1, $l2, $t1, $t2, $v) = @_;
     open F1, ">:utf8", "source.cqp" or die "Can't create cqp outfile\n";
     open F2, ">:utf8", "target.cqp" or die "Can't create cqp outfile\n";
     open AL, ">:utf8", "align.txt"  or die "Can't create alignment file\n";
     my $i = 1;
 
     printf AL "%s\t%s\ttu\tid_{id}\n", uc("${cname}_$l1"), uc("${cname}_$l2");
+
+    print STDERR "Processing..." if $v;
 
     my $proc = sub {
         my ($langs) = @_;
@@ -178,6 +186,8 @@ sub _tmx2cqpfiles {
         my @S = $t1 ? tokenize($langs->{$l1}) : split /\s+/, $langs->{$l1};
         my @T = $t2 ? tokenize($langs->{$l2}) : split /\s+/, $langs->{$l2};
 
+        print STDERR "\rProcessing... $i translation units" if $v && $i%1000==0;
+
         print AL "id_$i\tid_$i\n";
         print F1 "<tu id='$i'>\n", join("\n", @S), "\n</tu>\n";
         print F2 "<tu id='$i'>\n", join("\n", @T), "\n</tu>\n";
@@ -185,6 +195,7 @@ sub _tmx2cqpfiles {
     };
 
     $reader->for_tu2( $proc );
+    print STDERR "\rProcessing... $i translation units\n" if $v;
 }
 
 sub _detect_languages {

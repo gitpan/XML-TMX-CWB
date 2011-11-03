@@ -10,3 +10,4 @@ t/pod.t
 bin/cwb2tmx
 bin/tmx2cwb
 META.yml
+META.json
