@@ -19,11 +19,11 @@ XML::TMX::CWB - TMX interface with Open Corpus Workbench
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 
 =head1 SYNOPSIS
@@ -150,17 +150,17 @@ sub _encode {
     $reg    = catfile($registry, $name);
     mkdir $folder;
     _RUN("cwb-encode -c utf8 -d $folder -f source.cqp -R $reg -S tu+id");
-    _RUN("cwb-make -r $reg -v " . uc($name));
+    _RUN("cwb-make -r $registry -v " . uc($name));
 
     $name = lc("${cname}_$l2");
     $folder = catfile($corpora,  $name);
     $reg    = catfile($registry, $name);
     mkdir $folder;
     _RUN("cwb-encode -c utf8 -d $folder -f target.cqp -R $reg -S tu+id");
-    _RUN("cwb-make -r $reg -v " . uc($name));
+    _RUN("cwb-make -r $registry -v " . uc($name));
 
-    _RUN("cwb-align-import -r $reg -v align.txt");
-    _RUN("cwb-align-import -r $reg -v -inverse align.txt");
+    _RUN("cwb-align-import -r $registry -v align.txt");
+    _RUN("cwb-align-import -r $registry -v -inverse align.txt");
 }
 
 sub _tmx2cqpfiles {
