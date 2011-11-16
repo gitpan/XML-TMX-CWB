@@ -16,11 +16,11 @@ name: XML-TMX-CWB
 provides:
   XML::TMX::CWB:
     file: lib/XML/TMX/CWB.pm
-    version: 0.04
+    version: 0.05
 requires:
   CWB::CL: 2.002102
   Lingua::PT::PLNbase: 0.21
   XML::TMX: 0.17
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.04
+version: 0.05

@@ -61,6 +61,7 @@ Accepted options are:
 =over 4
 
 =item C<-from>
+
 =item C<-to>
 
 These two parameters are useful when more than two languages are
@@ -81,6 +82,7 @@ C<cwb-config> command or the environment variable
 C<CORPUS_REGISTRY>. If not, you will need to specify it.
 
 =item C<-toksource>
+
 =item C<-toktarget>
 
 These two options can be used to make the tool to tokenize the source
@@ -108,7 +110,7 @@ Alberto Manuel Brandão Simões, E<lt>ambs@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010 by Alberto Manuel Brandão Simões
+Copyright (C) 2010-2011 by Alberto Manuel Brandão Simões
 
 =cut
 

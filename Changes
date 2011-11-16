@@ -1,5 +1,8 @@
 Revision history for XML-TMX-CWB
 
+0.05    Wed Nov 16 17:31:21 WET 2011
+        Minor POD fixes
+
 0.04    Thu Nov  3 19:59:53 WET 2011
         Fixed bug introduced by me in Sylvain code.
 
