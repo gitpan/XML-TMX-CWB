@@ -1,5 +1,5 @@
 package XML::TMX::CWB;
-
+$XML::TMX::CWB::VERSION = '0.07';
 use warnings;
 use strict;
 use Lingua::PT::PLNbase;
@@ -16,11 +16,6 @@ use locale;
 =head1 NAME
 
 XML::TMX::CWB - TMX interface with Open Corpus Workbench
-
-=cut
-
-our $VERSION = '0.06';
-
 
 =head1 SYNOPSIS
 
@@ -70,7 +65,7 @@ sub toTMX {
     my $tmx = new XML::TMX::Writer();
     $tmx->start_tmx( $ops{output} ? (OUTPUT => $ops{output}) : (),
                      TOOL => 'XML::TMX::CWB',
-                     TOOLVERSION => $VERSION);
+                     TOOLVERSION => $XML::TMX::CWB::VERSION);
     for my $i (0 .. $count-1) {
         my ($s1, $s2, $t1, $t2) = $align->alg2cpos($i);
         my $source = join(" ",$Ws->cpos2str($s1 .. $s2));

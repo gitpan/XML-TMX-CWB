@@ -1,22 +1,22 @@
 Revision history for XML-TMX-CWB
 
-0.06    Fri Sep 12 17:13:41 WEST 2014
+0.06    2014-09-12
         Minor fixes.
         Support monolingual TMX (yeah, I know. Crazy thing!)
         
-0.05    Wed Nov 16 17:31:21 WET 2011
+0.05    2011-11-16
         Minor POD fixes
 
-0.04    Thu Nov  3 19:59:53 WET 2011
+0.04    2011-11-03
         Fixed bug introduced by me in Sylvain code.
 
-0.03    Thu Nov  3 19:53:53 WET 2011
+0.03    2011-11-03
         Fixed encode process that did not honor registry path.
         (reported by Sylvain Loiseau)
 
-0.02    Tue Nov 23 16:29:41 WET 2010
+0.02    2010-11-23
         Added basic documentation to the two scripts.
 
-0.01    Thu Nov 18 22:03:56 WET 2010
+0.01    2010-11-18
         First version, includes cwb2tmx and tmx2cwb working on simple cases.
 
