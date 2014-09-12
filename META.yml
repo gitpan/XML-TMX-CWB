@@ -3,24 +3,24 @@ abstract: 'TMX interface with Open Corpus Workbench'
 author:
   - 'Alberto Simoes <ambs@cpan.org>'
 build_requires:
-  Test::More: 0
+  Test::More: '0'
 configure_requires:
-  Module::Build: 0.38
+  Module::Build: '0.42'
 dynamic_config: 1
-generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.112621'
+generated_by: 'Module::Build version 0.421, CPAN::Meta::Converter version 2.142060'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+  version: '1.4'
 name: XML-TMX-CWB
 provides:
   XML::TMX::CWB:
     file: lib/XML/TMX/CWB.pm
-    version: 0.05
+    version: '0.06'
 requires:
-  CWB::CL: 2.002102
-  Lingua::PT::PLNbase: 0.21
-  XML::TMX: 0.17
+  CWB::CL: '2.002102'
+  Lingua::PT::PLNbase: '0.21'
+  XML::TMX: '0.17'
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.05
+version: '0.06'

@@ -1,5 +1,9 @@
 Revision history for XML-TMX-CWB
 
+0.06    Fri Sep 12 17:13:41 WEST 2014
+        Minor fixes.
+        Support monolingual TMX (yeah, I know. Crazy thing!)
+        
 0.05    Wed Nov 16 17:31:21 WET 2011
         Minor POD fixes
 

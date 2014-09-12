@@ -16,7 +16,16 @@ my $builder = Module::Build->new
    build_requires => {
                       'Test::More' => 0,
                      },
+   script_files => ['bin/cwb2tmx', 'bin/tmx2cwb'],
    add_to_cleanup      => [ 'XML-TMX-CWB-*' ],
+   meta_merge => {
+     resources => {
+       repository => {
+         url => 'https://natura.di.uminho.pt/svn/main/xml/XML-TMX-CWB/',
+         type => 'svn',
+       },
+     }
+   },
   );
 
 $builder->create_build_script();

@@ -17,13 +17,9 @@ use locale;
 
 XML::TMX::CWB - TMX interface with Open Corpus Workbench
 
-=head1 VERSION
-
-Version 0.05
-
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 
 =head1 SYNOPSIS
@@ -60,9 +56,9 @@ sub toTMX {
 
     die "Source and target corpora names are required.\n" unless $ops{source} and $ops{target};
 
-    my $Cs = new CWB::CL::Corpus uc($ops{source});
+    my $Cs = CWB::CL::Corpus->new(uc $ops{source});
     die "Can't find corpus [$ops{source}]\n" unless $Cs;
-    my $Ct = new CWB::CL::Corpus uc($ops{target});
+    my $Ct = CWB::CL::Corpus->new(uc $ops{target});
     die "Can't find corpus [$ops{target}]\n" unless $Ct;
 
     my $align = $Cs->attribute(lc($ops{target}), "a");
@@ -114,10 +110,53 @@ sub toCWB {
     # Create reader object
     my $reader = XML::TMX::Reader->new($tmx);
 
-    # Detect what languages to use
-    my ($source, $target) = _detect_languages($reader,
-                                              ($ops{from} || undef),
-                                              ($ops{to}   || undef));
+    my $tagged = exists($reader->{header}{-prop}{tagged})
+      && (
+          (
+           ref($reader->{header}{-prop}{tagged}) eq "ARRAY"
+           &&
+           ($reader->{header}{-prop}{tagged}[0] eq "true")
+          ) || (
+                $reader->{header}{-prop}{tagged} eq "true"
+               )
+         );
+
+    if ($tagged && ($ops{tok} || $ops{tokenize_source} || $ops{tokenize_target})) {
+        warn "Can't tokenize a tagged file. Ignoring tokenization request.";
+        delete $ops{$_} for (qw'tok tokenize_source tokenize_target');
+    }
+
+    if ($tagged) {
+        die "Can't guess fields for tagged tmx" unless exists $reader->{header}{-prop}{fields};
+
+        my $sattr =
+          exists($reader->{header}{-prop}{'s-attribute'})
+            ?
+              $reader->{header}{-prop}{'s-attribute'}
+                :
+                  []
+                    ;
+
+        $tagged = {
+                   fields => [split /,/ => $reader->{header}{-prop}{fields}[0]],
+                   sattr  => $sattr,
+                  };
+    }
+
+    my ($source, $target);
+
+    if ($ops{mono}) {
+        # Detect what languages to use
+        ($source) = _detect_language($reader,
+                                     ($ops{mono} || undef));
+        $ops{verbose} && print STDERR "Using language [$source]\n";
+    } else {
+        # Detect what languages to use
+        ($source, $target) = _detect_languages($reader,
+                                               ($ops{from} || undef),
+                                               ($ops{to}   || undef));
+        $ops{verbose} && print STDERR "Using languages [$source, $target]\n";
+    }
 
     # Detect corpus registry
     my $registry = $ops{registry} || $ENV{CORPUS_REGISTRY};
@@ -128,43 +167,78 @@ sub toCWB {
 
     $cname =~ s/[.-]/_/g;
 
-    _tmx2cqpfiles($reader, $cname, $source, $target,
-                  $ops{tokenize_source} || 0,
-                  $ops{tokenize_target} || 0,
-                  $ops{verbose}
-                 );
-
-    _encode($cname, $corpora, $registry, $source, $target);
+    if ($ops{mono}) {
+        _mtmx2cqpfiles($reader, $cname, $source,
+                       $ops{tok} || 0,
+                       $ops{verbose} || 0,
+                       $tagged
+                      );
+        _mencode($cname, $corpora, $registry, $source, $tagged);
+    } else {
+        _tmx2cqpfiles($reader, $cname, $source, $target,
+                      $ops{tokenize_source} || 0,
+                      $ops{tokenize_target} || 0,
+                      $ops{verbose} || 0,
+                      $tagged
+                     );
+        _encode($cname, $corpora, $registry, $source, $target, $tagged);
+        unlink "target.cqp";
+        unlink "align.txt";
+    }
 
     unlink "source.cqp";
-    unlink "target.cqp";
-    unlink "align.txt";
 }
 
 sub _encode {
-    my ($cname, $corpora, $registry, $l1, $l2) = @_;
+    my ($cname, $corpora, $registry, $l1, $l2, $tagged) = @_;
     my ($name, $folder, $reg);
+
+    my ($posatt, $sattr) = ("", "");
+    if ($tagged) {
+       shift @{$tagged->{fields}};
+       $posatt = join(" ", map { "-P $_" } @{$tagged->{fields}});
+       $sattr  = join(" ", map { "-S $_" } @{$tagged->{sattr}});
+    }
 
     $name = lc("${cname}_$l1");
     $folder = catfile($corpora,  $name);
     $reg    = catfile($registry, $name);
     mkdir $folder;
-    _RUN("cwb-encode -c utf8 -d $folder -f source.cqp -R $reg -S tu+id");
+    _RUN("cwb-encode -c utf8 -d $folder -f source.cqp -R $reg -S tu+id $sattr $posatt");
     _RUN("cwb-make -r $registry -v " . uc($name));
 
     $name = lc("${cname}_$l2");
     $folder = catfile($corpora,  $name);
     $reg    = catfile($registry, $name);
     mkdir $folder;
-    _RUN("cwb-encode -c utf8 -d $folder -f target.cqp -R $reg -S tu+id");
+    _RUN("cwb-encode -c utf8 -d $folder -f target.cqp -R $reg -S tu+id $sattr $posatt");
     _RUN("cwb-make -r $registry -v " . uc($name));
 
     _RUN("cwb-align-import -r $registry -v align.txt");
     _RUN("cwb-align-import -r $registry -v -inverse align.txt");
 }
 
+sub _mencode {
+    my ($cname, $corpora, $registry, $l1, $tagged) = @_;
+
+    my $name   = lc("${cname}_$l1");
+    my $folder = catfile($corpora,  $name);
+    my $reg    = catfile($registry, $name);
+
+    my ($posatt, $sattr) = ("", "");
+    if ($tagged) {
+       shift @{$tagged->{fields}};
+       $posatt = join(" ", map { "-P $_" } @{$tagged->{fields}});
+       $sattr  = join(" ", map { "-S $_" } @{$tagged->{sattr}});
+    }
+
+    mkdir $folder;
+    _RUN("cwb-encode -c utf8 -d $folder -f source.cqp -R $reg -S tu+id $sattr $posatt");
+    _RUN("cwb-make -r $registry -v " . uc($name));
+}
+
 sub _tmx2cqpfiles {
-    my ($reader, $cname, $l1, $l2, $t1, $t2, $v) = @_;
+    my ($reader, $cname, $l1, $l2, $t1, $t2, $v, $tagged) = @_;
     open F1, ">:utf8", "source.cqp" or die "Can't create cqp outfile\n";
     open F2, ">:utf8", "target.cqp" or die "Can't create cqp outfile\n";
     open AL, ">:utf8", "align.txt"  or die "Can't create alignment file\n";
@@ -178,13 +252,29 @@ sub _tmx2cqpfiles {
         my ($langs) = @_;
         return unless exists $langs->{$l1} && exists $langs->{$l2};
 
-        $langs->{$l1} =~ s/</&lt/g;
-        $langs->{$l2} =~ s/</&lt/g;
-        $langs->{$l1} =~ s/>/&gt/g;
-        $langs->{$l2} =~ s/>/&gt/g;
+        my (@S, @T);
+        if (not $tagged) {
+            for ($langs->{$l1}{-seg}, $langs->{$l2}{-seg}) {
+                s/&/&amp;/g;
+                s/</&lt;/g;
+                s/</&lt;/g;
+            }
 
-        my @S = $t1 ? tokenize($langs->{$l1}) : split /\s+/, $langs->{$l1};
-        my @T = $t2 ? tokenize($langs->{$l2}) : split /\s+/, $langs->{$l2};
+            @S = $t1 ? tokenize($langs->{$l1}{-seg}) : split /\s+/, $langs->{$l1}{-seg};
+            @T = $t2 ? tokenize($langs->{$l2}{-seg}) : split /\s+/, $langs->{$l2}{-seg};
+
+        } else {
+            @S = split /\n/, $langs->{$l1}{-seg};
+            @T = split /\n/, $langs->{$l2}{-seg};
+
+            for (@S, @T) {
+                if (/\t/) {
+                    s/&/&amp;/g;
+                    s/</&lt;/g;
+                    s/>/&gt;/g;
+                }
+            }
+        }
 
         print STDERR "\rProcessing... $i translation units" if $v && $i%1000==0;
 
@@ -194,29 +284,97 @@ sub _tmx2cqpfiles {
         ++$i;
     };
 
-    $reader->for_tu2( $proc );
+    $reader->for_tu( $proc );
     print STDERR "\rProcessing... $i translation units\n" if $v;
+    close AL;
+    close F1;
+    close F2;
+}
+
+sub _mtmx2cqpfiles {
+    my ($reader, $cname, $l1, $t1, $v, $tagged) = @_;
+    open F1, ">:utf8", "source.cqp" or die "Can't create cqp outfile\n";
+    my $i = 1;
+
+    print STDERR "Processing..." if $v;
+
+    my $proc = sub {
+        my ($langs) = @_;
+        return unless exists $langs->{$l1};
+
+        my (@S);
+        if (not $tagged) {
+            for ($langs->{$l1}{-seg}) {
+                s/&/&amp;/g;
+                s/</&lt;/g;
+                s/>/&gt;/g;
+            }
+
+            @S = $t1 ? tokenize($langs->{$l1}{-seg}) : split /\s+/, $langs->{$l1}{-seg};
+        } else {
+            @S = split /\n/, $langs->{$l1}{-seg};
+
+            for (@S) {
+                if (/\t/) {
+                    s/&/&amp;/g;
+                    s/</&lt;/g;
+                    s/>/&gt;/g;
+                }
+            }
+        }
+
+        print STDERR "\rProcessing... $i translation units" if $v && $i%1000==0;
+
+        print F1 "<tu id='$i'>\n", join("\n", @S), "\n</tu>\n";
+        ++$i;
+    };
+
+    $reader->for_tu( $proc );
+    print STDERR "\rProcessing... $i translation units\n" if $v;
+    close F1;
 }
 
 sub _detect_languages {
     my ($reader, $from, $to) = @_;
     my @languages = $reader->languages();
 
-    die "Language $from not available\n" if $from and !grep{$_ eq $from}@languages;
-    die "Language $to not available\n"   if $to   and !grep{$_ eq $to } @languages;
+    die "Language $from not available\n" if $from and !grep{_ieq($_, $from)}@languages;
+    die "Language $to not available\n"   if $to   and !grep{_ieq($_, $to)}  @languages;
+
+    ($from) = grep { _ieq($_, $from) } @languages if $from;
+    ($to)   = grep { _ieq($_, $to  ) } @languages if $to;
 
     return ($from, $to) if $from and $to;
 
     if (scalar(@languages) == 2) {
-        $to = grep { $_ ne $from } @languages if $from and not $to;
-        $from = grep { $_ ne $to } @languages if $to and not $from;
+        $to   = grep { $_ ne $from } @languages if $from and not $to;
+        $from = grep { $_ ne $to   } @languages if $to   and not $from;
         ($from, $to) = @languages if not ($to or $from);
         return ($from, $to) if $from and $to;
     }
     die "Can't guess what languages to use!\n";
 }
 
+sub _detect_language {
+    my ($reader, $mono) = @_;
+    my @languages = $reader->languages();
 
+    die "Language $mono not available\n" if $mono and !grep {_ieq($_, $mono)} @languages;
+
+    ($mono) = grep { _ieq($_, $mono) } @languages if $mono;
+
+    return ($mono) if $mono;
+
+    if (scalar(@languages) == 1) {
+        ($mono) = @languages;
+        return ($mono);
+    }
+    die "Can't guess what languages to use!\n";
+}
+
+sub _ieq {
+    uc($_[0]) eq uc($_[1])
+}
 
 
 
@@ -268,7 +426,7 @@ L<http://search.cpan.org/dist/XML-TMX-CWB/>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2010 Alberto Simoes.
+Copyright 2010-2014 Alberto Simoes.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published

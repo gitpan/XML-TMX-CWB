@@ -9,24 +9,36 @@ our (
      $v,               # verbose
      $h,               # help
      $from,            # source language
+     $mono,            # for monolingual corpora
      $to,              # target language
      $registry,        # CWB registry folder
      $corpora,         # corpora folder
      $toksource,       # tokenize source language?
      $toktarget,       # tokenize target language?
+     $tok,             # monolingual tokenize
     );
+
+my $file = shift;
+
+$h = 1 unless defined $file;
 
 if ($h) {
     print "   tmx2cwb <-from=PT> <-to=EN> <-corpora=/corpora>\n";
     print "           <-registry=/usr/share/cwb/registry>\n";
     print "           <-toksource> <-toktarget>\n";
+    print "           [file.tmx]\n\n";
+    print "   tmx2cwb <-mono=PT> <-corpora=/corpora>\n";
+    print "           <-registry=/usr/share/cwb/registry>\n";
+    print "           <-tok>\n";
     print "           [file.tmx]\n";
     exit 1;
 }
 
-my $file = shift;
+
 
 my %args;
+$args{mono}            = $mono      if $mono;
+$args{tok}             = $tok       if $tok;
 $args{to}              = $to        if $to;
 $args{from}            = $from      if $from;
 $args{corpora}         = $corpora   if $corpora;
@@ -50,6 +62,11 @@ tmx2cwb - encodes a pair of languages from a TMX file as a CWB corpus
            <-toksource> <-toktarget>
            [file.tmx]
 
+   tmx2cwb <-mono=PT> <-corpora=/corpora>
+           <-registry=/usr/share/cwb/registry>
+           <-tok>
+           [file.tmx]
+
 =head1 DESCRIPTION
 
 This program encodes a pair of languages extracted from a TMX file as
@@ -70,6 +87,12 @@ encoded. When only two languages are present, they are used by
 default. If you want to force an order on those two languages, it is
 enough to specify one of the two options.
 
+=item C<-mono>
+
+We know TMX are for translation memories. But you might want to encode
+a monolingual corpus from a TMX. We let you do that from C<tmx2cwb>,
+using this switch, together with the language name to be encoded.
+
 =item C<-corpora>
 
 Path to the directory where the corpus should be encoded. Defaults to
@@ -89,6 +112,11 @@ These two options can be used to make the tool to tokenize the source
 and/or the target language. Note that the used rules are good for
 Portuguese, acceptable for Spanish, English, French and Italian, and
 should be quite bad for other languages.
+
+=item C<-tok>
+
+When using the monolingual switch C<-mono> described above, you might
+want to tokenize its source. Use this switch for that.
 
 =item C<-v>
 
